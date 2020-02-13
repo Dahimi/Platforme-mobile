@@ -1,4 +1,6 @@
 #include "TimerOne.h"
+#include <PID_v1.h>
+
 const byte motor_interruptA1 = 2;
 const byte motor_interruptB1 = 3;
 const byte motor_interruptA2 = 18;
@@ -22,14 +24,17 @@ int d2 = 0;
 const int kp = 200;
 const int ki = 5;
 const int kd = 100;
-float erreur1 = 0;
-float erreur_precedente1 = 0 ;
-float somme_erreur1 = 0;
-float diff_erreur1 = 0;
-float erreur2 = 0;
-float erreur_precedente2 = 0 ;
-float somme_erreur2 = 0;
-float diff_erreur2 = 0;
+//float erreur1 = 0;
+//float erreur_precedente1 = 0 ;
+//float somme_erreur1 = 0;
+//float diff_erreur1 = 0;
+//float erreur2 = 0;
+//float erreur_precedente2 = 0 ;
+//float somme_erreur2 = 0;
+//float diff_erreur2 = 0;
+double Setpoint, Input, Output;
+PID myPID(&Input, &Output, &Setpoint,kp,ki,kd, DIRECT);
+
 
 void ISR_countA1() {
   counter1++;
@@ -91,6 +96,10 @@ void setup() {
   attachInterrupt(digitalPinToInterrupt(motor_interruptB1), ISR_countB1, RISING);
   attachInterrupt(digitalPinToInterrupt(motor_interruptA2), ISR_countA2, RISING);
   attachInterrupt(digitalPinToInterrupt(motor_interruptB2), ISR_countB2, RISING);
+  Input = map(mesure1,-3300,3300, -255,255);
+  Setpoint = 00;
+  //turn the PID on
+  myPID.SetMode(AUTOMATIC);
 }
 
 void loop() {
@@ -128,6 +137,12 @@ void loop() {
       case('e') : v1 = -255 ; v2= -255;break ;
     }
     v1 = constrain(v1, -255 , 255); v2 = constrain(v2, -255, 255);
+    // calculating the pid 
+    Setpoint = v1 ;
+    Input = map( mesure1 , -3300 , 3300, -255 ,255) ;
+    myPID.Compute();
+    // the convenient v1 to the driver 
+    v1 = Output ;
     if (v1 < 0) {
       analogWrite(pinPwm1, -v1);
       d1 = 1;
@@ -157,9 +172,11 @@ void loop() {
     //     Serial.print(v1);Serial.println(d1);
     //     Serial.print(v2);Serial.println(d2);
     delay(500);
+    
   }
-  else
-  {
+  
+ // else
+  //{
     //    Serial.print(v1);Serial.println(d1);
     //    Serial.print(v2);Serial.println(d2);
     //    erreur1 = map(v1,0,255,0,36) - mesure1;
@@ -175,5 +192,5 @@ void loop() {
     //    analogWrite(pinPwm1,v1);
     //    analogWrite(pinPwm2,v2);
     //    delay(500);
-  }
+  //}
 }
