@@ -174,23 +174,18 @@ void loop() {
     delay(500);
     
   }
-  
- // else
-  //{
-    //    Serial.print(v1);Serial.println(d1);
-    //    Serial.print(v2);Serial.println(d2);
-    //    erreur1 = map(v1,0,255,0,36) - mesure1;
+}
+void pidController ()  {
+    //    
+    //    erreur1 = map(v1,-255,255,-3300,3300) - mesure1;
     //    diff_erreur1 = erreur1 - erreur_precedente1;
     //    somme_erreur1 += erreur1;
     //    erreur_precedente1 = erreur1;
-    //    v1=map( kp * erreur1 + kd * diff_erreur1 + ki * somme_erreur1,0,36,0,255);
-    //    erreur2 = map(v2,0,255,0,36) - mesure2;
+    //    v1=map( kp * erreur1 + kd * diff_erreur1 + ki * somme_erreur1,-3300,3300,-255,255);
+    //    erreur2 = map(v2,-255,255,-3300,3300) - mesure2;
     //    diff_erreur2 = erreur2 - erreur_precedente2;
     //    somme_erreur2 += erreur2;
     //    erreur_precedente2 = erreur2;
-    //    v2=map(kp*erreur2 + kd*diff_erreur2 + ki*somme_erreur2,0,36,0,255);
-    //    analogWrite(pinPwm1,v1);
-    //    analogWrite(pinPwm2,v2);
+    //    v2=map(kp*erreur2 + kd*diff_erreur2 + ki*somme_erreur2,-3300,3300,-255,255);
     //    delay(500);
-  //}
-}
+  }
