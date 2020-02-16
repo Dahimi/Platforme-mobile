@@ -32,15 +32,17 @@ const int kd = 100;
 //float erreur_precedente2 = 0 ;
 //float somme_erreur2 = 0;
 //float diff_erreur2 = 0;
-double Setpoint, Input, Output;
-PID myPID(&Input, &Output, &Setpoint,kp,ki,kd, DIRECT);
+//double Setpoint, Input, Output;
+//PID myPID(&Input, &Output, &Setpoint,kp,ki,kd, DIRECT);
 
 
 void ISR_countA1() {
   counter1++;
+  
 }
 void ISR_countB1() {
   counter1++;
+ 
   if (digitalRead(motor_interruptA1)) {
     signe1 = 1;
   }
@@ -53,6 +55,7 @@ void ISR_countA2() {
 }
 void ISR_countB2 () {
   counter2++;
+ 
   if (digitalRead(motor_interruptA2)) {
     signe2 = 1;
   }
@@ -65,19 +68,19 @@ void ISR_timerone() {
   Timer1.detachInterrupt();
 
   mesure1 = (float)(counter1 / nbCap * 60.0 * signe1); // Avons-nous vraiment besoin du " (float) " ?
-    Serial.print(mesure1);
- // Serial.print("4655");
-  Serial.print(' ');
-  Serial.print(counter1);
-// Serial.print("455");
+    Serial1.print(mesure1);
+ // Serial1.print("4655");
+  Serial1.print(' ');
+  Serial1.print(counter1);
+// Serial1.print("455");
   counter1 = 0;
-  Serial.print(' ');
+  Serial1.print(' ');
   mesure2 = (float)(counter2 / nbCap * 60.0 * signe2);
-   Serial.print(mesure2);
+   Serial1.print(mesure2);
  // Serial.print("7755");
-  Serial.print(' ');
-  Serial.println(counter2);
-//Serial.println("785");
+  Serial1.print(' ');
+  Serial1.println(counter2);
+
 delay(100);
 
 
@@ -89,23 +92,23 @@ void setup() {
   pinMode ( pinPwm1 , OUTPUT);
   pinMode ( pinDir2 , OUTPUT);
   pinMode ( pinPwm2 , OUTPUT);
-  Serial.begin(9600);
+  Serial1.begin(9600);
   Timer1.initialize(1000000);
   Timer1.attachInterrupt(ISR_timerone);
   attachInterrupt(digitalPinToInterrupt(motor_interruptA1), ISR_countA1, RISING);
   attachInterrupt(digitalPinToInterrupt(motor_interruptB1), ISR_countB1, RISING);
   attachInterrupt(digitalPinToInterrupt(motor_interruptA2), ISR_countA2, RISING);
   attachInterrupt(digitalPinToInterrupt(motor_interruptB2), ISR_countB2, RISING);
-  Input = map(mesure1,-3300,3300, -255,255);
-  Setpoint = 00;
-  //turn the PID on
-  myPID.SetMode(AUTOMATIC);
+//  Input = map(mesure1,-3300,3300, -255,255);
+//  Setpoint = 00;
+//  //turn the PID on
+//  myPID.SetMode(AUTOMATIC);
 }
 
 void loop() {
-  if ( Serial.available () > 0 )
+  if ( Serial1.available () > 0 )
   {
-    master = Serial.read();
+    master = Serial1.read();
     switch (master)
     {
       case ('z') : v1 += 10 ; v2 += 10;
@@ -138,11 +141,11 @@ void loop() {
     }
     v1 = constrain(v1, -255 , 255); v2 = constrain(v2, -255, 255);
     // calculating the pid 
-    Setpoint = v1 ;
-    Input = map( mesure1 , -3300 , 3300, -255 ,255) ;
-    myPID.Compute();
-    // the convenient v1 to the driver 
-    v1 = Output ;
+//     Setpoint = v1 ;
+//    Input = map( mesure1 , -3300 , 3300, -255 ,255) ;
+//    myPID.Compute();
+//    // the convenient v1 to the driver 
+//    v1 = Output ;
     if (v1 < 0) {
       analogWrite(pinPwm1, -v1);
       d1 = 1;
@@ -169,12 +172,13 @@ void loop() {
     } else {
       digitalWrite(pinDir2, HIGH);
     }
-    //     Serial.print(v1);Serial.println(d1);
-    //     Serial.print(v2);Serial.println(d2);
+    //     Serial1.print(v1);Serial1.println(d1);
+    //     Serial1.print(v2);Serial1.println(d2);
     delay(500);
     
   }
 }
+
 void pidController ()  {
     //    
     //    erreur1 = map(v1,-255,255,-3300,3300) - mesure1;
