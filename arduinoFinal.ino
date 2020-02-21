@@ -18,12 +18,14 @@ int pinDir2 = 32;
 int pinPwm2 = 13;
 char master = 'm';
 int v1 = 0 ;
+int v =0;
 int v2 = 0;
 int d1 = 0;
 int d2 = 0;
-const int kp = 200;
-const int ki = 5;
-const int kd = 100;
+const float kp = 0.01413;
+const float ki = 2.542782;
+const float kd = 0.000008;
+int distance = 0 ;
 //float erreur1 = 0;
 //float erreur_precedente1 = 0 ;
 //float somme_erreur1 = 0;
@@ -66,24 +68,18 @@ void ISR_countB2 () {
 }
 void ISR_timerone() {
   Timer1.detachInterrupt();
-
   mesure1 = (float)(counter1 / nbCap * 60.0 * signe1); // Avons-nous vraiment besoin du " (float) " ?
-    Serial1.print(mesure1);
- // Serial1.print("4655");
+  Serial1.print(mesure1);
   Serial1.print(' ');
   Serial1.print(counter1);
-// Serial1.print("455");
   counter1 = 0;
   Serial1.print(' ');
   mesure2 = (float)(counter2 / nbCap * 60.0 * signe2);
    Serial1.print(mesure2);
- // Serial.print("7755");
   Serial1.print(' ');
   Serial1.println(counter2);
-
-delay(100);
-
-
+  distance += max(mesure1, mesure2) *6.28/60;
+  delay(100);
   counter2 = 0;
   Timer1.attachInterrupt(ISR_timerone);
 }
@@ -140,12 +136,22 @@ void loop() {
       case('e') : v1 = -255 ; v2= -255;break ;
     }
     v1 = constrain(v1, -255 , 255); v2 = constrain(v2, -255, 255);
-    // calculating the pid 
-//     Setpoint = v1 ;
+   if(distance>= 5) {
+    v1 =0;
+    v2 = 0;
+    distance = 0;
+   }
+    //v = v1;
+    } 
+
+ else {// calcul de pid 
+    //     Setpoint = v ;
 //    Input = map( mesure1 , -3300 , 3300, -255 ,255) ;
 //    myPID.Compute();
 //    // the convenient v1 to the driver 
 //    v1 = Output ;
+    
+}
     if (v1 < 0) {
       analogWrite(pinPwm1, -v1);
       d1 = 1;
@@ -176,8 +182,8 @@ void loop() {
     //     Serial1.print(v2);Serial1.println(d2);
     delay(500);
     
-  }
-}
+  
+ }
 
 void pidController ()  {
     //    
