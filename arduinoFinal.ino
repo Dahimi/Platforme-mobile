@@ -3,8 +3,8 @@
 
 const byte motor_interruptA1 = 2;
 const byte motor_interruptB1 = 3;
-const byte motor_interruptA2 = 18;
-const byte motor_interruptB2 = 19;
+const byte motor_interruptA2 = 20;
+const byte motor_interruptB2 = 21;
 unsigned long counter1 = 0;
 unsigned long counter2 = 0;
 long nbCap = 17;
@@ -22,10 +22,11 @@ int v =0;
 int v2 = 0;
 int d1 = 0;
 int d2 = 0;
+
 const float kp = 0.01413;
 const float ki = 2.542782;
 const float kd = 0.000008;
-int distance = 0 ;
+float distance = 0 ;
 //float erreur1 = 0;
 //float erreur_precedente1 = 0 ;
 //float somme_erreur1 = 0;
@@ -34,23 +35,26 @@ int distance = 0 ;
 //float erreur_precedente2 = 0 ;
 //float somme_erreur2 = 0;
 //float diff_erreur2 = 0;
-//double Setpoint, Input, Output;
-//PID myPID(&Input, &Output, &Setpoint,kp,ki,kd, DIRECT);
+double Setpoint, Input, Output;
+PID myPID(&Input, &Output, &Setpoint,kp,ki,kd, DIRECT);
 
 
 void ISR_countA1() {
   counter1++;
+ 
   
 }
 void ISR_countB1() {
-  counter1++;
  
-  if (digitalRead(motor_interruptA1)) {
-    signe1 = 1;
-  }
-  else {
-    signe1 = -1;
-  }
+  counter1++;
+  
+//  if (digitalRead(v1>=0)) {
+//    signe1 = 1;
+//    
+//  }  else {
+//   signe1 = -1;
+//    
+//  }
 }
 void ISR_countA2() {
   counter2++;
@@ -68,19 +72,29 @@ void ISR_countB2 () {
 }
 void ISR_timerone() {
   Timer1.detachInterrupt();
+   if (v1>=0) {
+    signe1 = 1;
+    
+  }  else {
+   signe1 = -1;
+    
+  }
   mesure1 = (float)(counter1 / nbCap * 60.0 * signe1); // Avons-nous vraiment besoin du " (float) " ?
-  Serial1.print(mesure1);
-  Serial1.print(' ');
-  Serial1.print(counter1);
+  Serial.print(mesure1);
+  Serial.print(' ');
+  
+  Serial.print(counter1);
   counter1 = 0;
-  Serial1.print(' ');
+  Serial.print(' ');
   mesure2 = (float)(counter2 / nbCap * 60.0 * signe2);
-   Serial1.print(mesure2);
-  Serial1.print(' ');
-  Serial1.println(counter2);
+   Serial.print(mesure2);
+  Serial.print(' ');
+  Serial.println(counter2);
+
   distance += max(mesure1, mesure2) *6.28/60;
   delay(100);
-  counter2 = 0;
+ counter2 = 0;
+   
   Timer1.attachInterrupt(ISR_timerone);
 }
 void setup() {
@@ -88,23 +102,25 @@ void setup() {
   pinMode ( pinPwm1 , OUTPUT);
   pinMode ( pinDir2 , OUTPUT);
   pinMode ( pinPwm2 , OUTPUT);
-  Serial1.begin(9600);
+  pinMode ( motor_interruptA1 , INPUT_PULLUP);
+  pinMode ( motor_interruptB1 , INPUT_PULLUP);
+  Serial.begin(115200);
   Timer1.initialize(1000000);
   Timer1.attachInterrupt(ISR_timerone);
   attachInterrupt(digitalPinToInterrupt(motor_interruptA1), ISR_countA1, RISING);
   attachInterrupt(digitalPinToInterrupt(motor_interruptB1), ISR_countB1, RISING);
   attachInterrupt(digitalPinToInterrupt(motor_interruptA2), ISR_countA2, RISING);
   attachInterrupt(digitalPinToInterrupt(motor_interruptB2), ISR_countB2, RISING);
-//  Input = map(mesure1,-3300,3300, -255,255);
-//  Setpoint = 00;
-//  //turn the PID on
-//  myPID.SetMode(AUTOMATIC);
+  Input = map(mesure1,-3480,3480, -255,255);
+  Setpoint = 00;
+//  turn the PID on
+  myPID.SetMode(AUTOMATIC);
 }
 
 void loop() {
-  if ( Serial1.available () > 0 )
+  if ( Serial.available () > 0 )
   {
-    master = Serial1.read();
+    master = Serial.read();
     switch (master)
     {
       case ('z') : v1 += 10 ; v2 += 10;
@@ -132,24 +148,27 @@ void loop() {
         break;
       case ('g') : v1 = 255; v2 = -255; break;
       case ('o') : v1 = -255; v2 = 255; break;
-      case('a') : v1 = 255 ; v2= 255;break ;
+      case('a') : v1 = 123 ; v2= 123;break ;
       case('e') : v1 = -255 ; v2= -255;break ;
     }
     v1 = constrain(v1, -255 , 255); v2 = constrain(v2, -255, 255);
-   if(distance>= 5) {
-    v1 =0;
-    v2 = 0;
-    distance = 0;
-   }
-    //v = v1;
+//   if(distance>= 5) {
+//    v1 =0;
+//    v2 = 0;
+//    distance = 0;
+//   }
+    v = v1;
     } 
 
  else {// calcul de pid 
-    //     Setpoint = v ;
-//    Input = map( mesure1 , -3300 , 3300, -255 ,255) ;
-//    myPID.Compute();
+        Setpoint = v ;
+          Serial.print("set point ");
+  Serial.println( map( Setpoint , -255 , 255, -3480 ,3480) );
+    Input = map( mesure1 , -3480 , 3480, -255 ,255) ;
+    myPID.Compute();
 //    // the convenient v1 to the driver 
-//    v1 = Output ;
+    v1 =(int) Output ;
+    Serial.println(Output);
     
 }
     if (v1 < 0) {
