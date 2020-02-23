@@ -22,19 +22,10 @@ int v =0;
 int v2 = 0;
 int d1 = 0;
 int d2 = 0;
-
-const float kp = 0.01413;
-const float ki = 2.542782;
-const float kd = 0.000008;
-float distance = 0 ;
-//float erreur1 = 0;
-//float erreur_precedente1 = 0 ;
-//float somme_erreur1 = 0;
-//float diff_erreur1 = 0;
-//float erreur2 = 0;
-//float erreur_precedente2 = 0 ;
-//float somme_erreur2 = 0;
-//float diff_erreur2 = 0;
+int distance = 0;
+ const float kp = 0.01413;
+ const float ki = 3.112782;
+ const float kd = 0.000018;
 double Setpoint, Input, Output;
 PID myPID(&Input, &Output, &Setpoint,kp,ki,kd, DIRECT);
 
@@ -73,11 +64,9 @@ void ISR_countB2 () {
 void ISR_timerone() {
   Timer1.detachInterrupt();
    if (v1>=0) {
-    signe1 = 1;
-    
+    signe1 = 1;   
   }  else {
-   signe1 = -1;
-    
+   signe1 = -1;    
   }
   mesure1 = (float)(counter1 / nbCap * 60.0 * signe1); // Avons-nous vraiment besoin du " (float) " ?
   Serial.print(mesure1);
@@ -90,7 +79,10 @@ void ISR_timerone() {
    Serial.print(mesure2);
   Serial.print(' ');
   Serial.println(counter2);
-
+Serial.print("set point ");
+  Serial.println( map( Setpoint , -255 , 255, -3480 ,3480) );
+       Serial.print("output");
+    Serial.println(Output);
   distance += max(mesure1, mesure2) *6.28/60;
   delay(100);
  counter2 = 0;
@@ -115,6 +107,7 @@ void setup() {
   Setpoint = 00;
 //  turn the PID on
   myPID.SetMode(AUTOMATIC);
+  myPID.SetOutputLimits(-255,255);
 }
 
 void loop() {
@@ -160,16 +153,12 @@ void loop() {
     v = v1;
     } 
 
- else {// calcul de pid 
-        Setpoint = v ;
-          Serial.print("set point ");
-  Serial.println( map( Setpoint , -255 , 255, -3480 ,3480) );
+ else if( v1 == v2 ){// calcul de pid 
+        Setpoint = v ;   
     Input = map( mesure1 , -3480 , 3480, -255 ,255) ;
     myPID.Compute();
-//    // the convenient v1 to the driver 
     v1 =(int) Output ;
-    Serial.println(Output);
-    
+    v2 = v1;
 }
     if (v1 < 0) {
       analogWrite(pinPwm1, -v1);
@@ -203,18 +192,3 @@ void loop() {
     
   
  }
-
-void pidController ()  {
-    //    
-    //    erreur1 = map(v1,-255,255,-3300,3300) - mesure1;
-    //    diff_erreur1 = erreur1 - erreur_precedente1;
-    //    somme_erreur1 += erreur1;
-    //    erreur_precedente1 = erreur1;
-    //    v1=map( kp * erreur1 + kd * diff_erreur1 + ki * somme_erreur1,-3300,3300,-255,255);
-    //    erreur2 = map(v2,-255,255,-3300,3300) - mesure2;
-    //    diff_erreur2 = erreur2 - erreur_precedente2;
-    //    somme_erreur2 += erreur2;
-    //    erreur_precedente2 = erreur2;
-    //    v2=map(kp*erreur2 + kd*diff_erreur2 + ki*somme_erreur2,-3300,3300,-255,255);
-    //    delay(500);
-  }
