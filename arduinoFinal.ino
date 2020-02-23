@@ -17,18 +17,24 @@ int pinPwm1 = 10;
 int pinDir2 = 32;
 int pinPwm2 = 13;
 char master = 'm';
+String message= "";;
 int v1 = 0 ;
 int v =0;
 int v2 = 0;
 int d1 = 0;
 int d2 = 0;
-int distance = 0;
+float distance = 0;
  const float kp = 0.01413;
  const float ki = 3.112782;
  const float kd = 0.000018;
+ const float kp2 = 400;
+ const float ki2 = 35.112782;
+ const float kd2 = 0.018;
 double Setpoint, Input, Output;
+double Setpoint2, Input2, Output2;
 PID myPID(&Input, &Output, &Setpoint,kp,ki,kd, DIRECT);
-
+PID myPID2(&Input2, &Output2, &Setpoint2,kp2,ki2,kd2, DIRECT);
+boolean is_positionPid = false;
 
 void ISR_countA1() {
   counter1++;
@@ -68,22 +74,23 @@ void ISR_timerone() {
   }  else {
    signe1 = -1;    
   }
-  mesure1 = (float)(counter1 / nbCap * 60.0 * signe1); // Avons-nous vraiment besoin du " (float) " ?
+  mesure1 = (float)(counter1 *1.0/ nbCap * 60.0 * signe1); // Avons-nous vraiment besoin du " (float) " ?
   Serial.print(mesure1);
-  Serial.print(' ');
-  
+  Serial.print(' '); 
   Serial.print(counter1);
+  distance += counter1 *1.0/nbCap /50*6.28*0.05*signe1;
   counter1 = 0;
   Serial.print(' ');
   mesure2 = (float)(counter2 / nbCap * 60.0 * signe2);
-   Serial.print(mesure2);
+  Serial.print(mesure2);
   Serial.print(' ');
   Serial.println(counter2);
-Serial.print("set point ");
+  Serial.print("set point ");
   Serial.println( map( Setpoint , -255 , 255, -3480 ,3480) );
-       Serial.print("output");
-    Serial.println(Output);
-  distance += max(mesure1, mesure2) *6.28/60;
+  Serial.print("la distance");
+  Serial.println(distance);
+     Serial.print("Setpoint2");
+        Serial.println(Setpoint2);
   delay(100);
  counter2 = 0;
    
@@ -108,6 +115,11 @@ void setup() {
 //  turn the PID on
   myPID.SetMode(AUTOMATIC);
   myPID.SetOutputLimits(-255,255);
+   Input2 = distance;
+  Setpoint2 = 00;
+//  turn the PID on
+  myPID2.SetMode(AUTOMATIC);
+  myPID2.SetOutputLimits(-255,255);
 }
 
 void loop() {
@@ -143,24 +155,19 @@ void loop() {
       case ('o') : v1 = -255; v2 = 255; break;
       case('a') : v1 = 123 ; v2= 123;break ;
       case('e') : v1 = -255 ; v2= -255;break ;
+      case('*'):  calculDistance();
+       break;
     }
     v1 = constrain(v1, -255 , 255); v2 = constrain(v2, -255, 255);
-//   if(distance>= 5) {
-//    v1 =0;
-//    v2 = 0;
-//    distance = 0;
-//   }
     v = v1;
     } 
-
- else if( v1 == v2 ){// calcul de pid 
-        Setpoint = v ;   
-    Input = map( mesure1 , -3480 , 3480, -255 ,255) ;
-    myPID.Compute();
-    v1 =(int) Output ;
-    v2 = v1;
+else { if (is_positionPid){
+  pidPosition();
+  }
+  else if( v1 == v2 ){// calcul de pid 
+    pidSpeed();
 }
-    if (v1 < 0) {
+}   if (v1 < 0) {
       analogWrite(pinPwm1, -v1);
       d1 = 1;
     }
@@ -186,9 +193,27 @@ void loop() {
     } else {
       digitalWrite(pinDir2, HIGH);
     }
-    //     Serial1.print(v1);Serial1.println(d1);
-    //     Serial1.print(v2);Serial1.println(d2);
     delay(500);
     
   
  }
+
+  void calculDistance(){
+    message = Serial.readString();
+   Setpoint2 = message.toFloat();
+
+    is_positionPid = true;                  
+   }
+   void pidSpeed(){
+        Setpoint = v ;   
+    Input = map( mesure1 , -3480 , 3480, -255 ,255) ;
+    myPID.Compute();
+    v1 =(int) Output ;
+    v2 = v1;
+   }
+   void pidPosition(){
+    Input2 = distance ;
+    myPID2.Compute();
+    v1 =(int) Output2 ;
+    v2 = v1;
+   }
