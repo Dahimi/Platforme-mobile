@@ -35,6 +35,7 @@ double Setpoint2, Input2, Output2;
 PID myPID(&Input, &Output, &Setpoint,kp,ki,kd, DIRECT);
 PID myPID2(&Input2, &Output2, &Setpoint2,kp2,ki2,kd2, DIRECT);
 boolean is_positionPid = false;
+boolean is_speedPid = true;
 
 void ISR_countA1() {
   counter1++;
@@ -157,6 +158,9 @@ void loop() {
       case('e') : v1 = -255 ; v2= -255;break ;
       case('*'):  calculDistance();
        break;
+      case('!'):  calculSpeed();
+       break;
+       
     }
     v1 = constrain(v1, -255 , 255); v2 = constrain(v2, -255, 255);
     v = v1;
@@ -194,15 +198,20 @@ else { if (is_positionPid){
       digitalWrite(pinDir2, HIGH);
     }
     delay(500);
-    
-  
  }
 
   void calculDistance(){
     message = Serial.readString();
    Setpoint2 = message.toFloat();
-
-    is_positionPid = true;                  
+    is_positionPid = true;     
+    is_speedPid = false;              
+   }
+    void calculSpeed(){
+    message = Serial.readString();
+   v1 = map(message.toFloat(),-35,35 , -255, 255);
+   v2 = v1;
+    is_speedPid = true;    
+    is_positionPid = false;               
    }
    void pidSpeed(){
         Setpoint = v ;   
